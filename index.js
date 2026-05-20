@@ -27,6 +27,7 @@ async function run() {
 
     const db = client.db("ideaVault");
     const ideasCollection = db.collection("ideas");
+    const commentCollection = db.collection("comments");
 
     app.get("/ideas", async (req, res) => {
       const ideas = await ideasCollection.find().toArray();
@@ -36,7 +37,24 @@ async function run() {
     app.get("/ideas/:ideaId", async (req, res) => {
       const { ideaId } = req.params;
       const idea = await ideasCollection.findOne({ _id: new ObjectId(ideaId) });
+
+      if (!idea) return res.status(404).send({ message: "Not found" });
+
       res.send(idea);
+    });
+
+    app.post("/comment", async (req, res) => {
+      const commentData = req.body;
+      const result = await commentCollection.insertOne(commentData);
+
+      res.json(result);
+    });
+
+    app.get("/comment/:ideaId", async (req, res) => {
+      const { ideaId } = req.params;
+      const result = await commentCollection.find({ ideaId: ideaId }).toArray();
+
+      res.json(result);
     });
 
     console.log(
