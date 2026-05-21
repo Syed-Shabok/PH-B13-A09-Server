@@ -96,6 +96,14 @@ async function run() {
       res.json(result);
     });
 
+    app.get("/comment/user/:userId", async (req, res) => {
+      const { userId } = req.params;
+      const comments = await commentCollection
+        .find({ userId: userId })
+        .toArray();
+      res.json(comments);
+    });
+
     app.delete("/comment/:commentId", async (req, res) => {
       const { commentId } = req.params;
       const result = await commentCollection.deleteOne({
