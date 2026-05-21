@@ -57,6 +57,15 @@ async function run() {
       res.json(result);
     });
 
+    app.delete("/comment/:commentId", async (req, res) => {
+      const { commentId } = req.params;
+      const result = await commentCollection.deleteOne({
+        _id: new ObjectId(commentId),
+      });
+
+      res.json(result);
+    });
+
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!",
     );
