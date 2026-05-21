@@ -34,6 +34,13 @@ async function run() {
       res.send(ideas);
     });
 
+    app.post("/ideas", async (req, res) => {
+      const ideaData = req.body;
+      const result = await ideasCollection.insertOne(ideaData);
+
+      res.send(result);
+    });
+
     app.get("/ideas/:ideaId", async (req, res) => {
       const { ideaId } = req.params;
       const idea = await ideasCollection.findOne({ _id: new ObjectId(ideaId) });
