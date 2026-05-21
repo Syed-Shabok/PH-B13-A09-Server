@@ -4,6 +4,7 @@ dotenv.config();
 const cors = require("cors");
 const app = express();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const { createRemoteJWKSet, jwtVerify } = require("jose-cjs");
 
 app.use(cors());
 app.use(express.json());
@@ -19,6 +20,29 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   },
 });
+
+const JWKS = createRemoteJWKSet(new URL("http://localhost:3000/api/auth/jwks"));
+
+const verifyToken = async (req, res, next) => {
+  const authHeader = req?.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  const token = authHeader.split(" ")[1];
+  if (!token) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  try {
+    const { payload } = await jwtVerify(token, JWKS);
+    console.log("Payload: ", payload);
+    next();
+  } catch (error) {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+};
+
 async function run() {
   try {
     await client.connect();
@@ -66,9 +90,11 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/ideas/:ideaId", async (req, res) => {
+    app.get("/ideas/:ideaId", verifyToken, async (req, res) => {
       const { ideaId } = req.params;
-      const idea = await ideasCollection.findOne({ _id: new ObjectId(ideaId) });
+      const idea = await ideasCollection.findOne({
+        _id: new ObjectId(ideaId),
+      });
 
       if (!idea) return res.status(404).send({ message: "Not found" });
 
@@ -82,7 +108,7 @@ async function run() {
       res.send(result);
     });
 
-    app.post("/comment", async (req, res) => {
+    app.post("/comment", verifyToken, async (req, res) => {
       const commentData = req.body;
       const result = await commentCollection.insertOne(commentData);
 
@@ -104,7 +130,7 @@ async function run() {
       res.json(comments);
     });
 
-    app.delete("/comment/:commentId", async (req, res) => {
+    app.delete("/comment/:commentId", verifyToken, async (req, res) => {
       const { commentId } = req.params;
       const result = await commentCollection.deleteOne({
         _id: new ObjectId(commentId),
@@ -113,7 +139,7 @@ async function run() {
       res.json(result);
     });
 
-    app.patch("/comment/:commentId", async (req, res) => {
+    app.patch("/comment/:commentId", verifyToken, async (req, res) => {
       const { commentId } = req.params;
       const { text } = req.body;
 
