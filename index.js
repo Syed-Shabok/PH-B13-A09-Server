@@ -34,9 +34,34 @@ async function run() {
       res.send(ideas);
     });
 
-    app.post("/ideas", async (req, res) => {
-      const ideaData = req.body;
-      const result = await ideasCollection.insertOne(ideaData);
+    app.get("/ideas/user/:email", async (req, res) => {
+      const { email } = req.params;
+      const ideas = await ideasCollection
+        .find({ "author.authorEmail": email })
+        .toArray();
+      res.send(ideas);
+    });
+
+    app.patch("/ideas/:ideaId", async (req, res) => {
+      const { ideaId } = req.params;
+      const updatedFields = req.body;
+
+      const result = await ideasCollection.updateOne(
+        { _id: new ObjectId(ideaId) },
+        { $set: updatedFields },
+      );
+
+      res.send(result);
+    });
+
+    app.delete("/ideas/:ideaId", async (req, res) => {
+      const { ideaId } = req.params;
+
+      const result = await ideasCollection.deleteOne({
+        _id: new ObjectId(ideaId),
+      });
+      // comnts delete
+      await commentCollection.deleteMany({ ideaId: ideaId });
 
       res.send(result);
     });
@@ -48,6 +73,13 @@ async function run() {
       if (!idea) return res.status(404).send({ message: "Not found" });
 
       res.send(idea);
+    });
+
+    app.post("/ideas", async (req, res) => {
+      const ideaData = req.body;
+      const result = await ideasCollection.insertOne(ideaData);
+
+      res.send(result);
     });
 
     app.post("/comment", async (req, res) => {
