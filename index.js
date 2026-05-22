@@ -111,7 +111,7 @@ async function run() {
       res.send(ideas);
     });
 
-    app.patch("/ideas/:ideaId", async (req, res) => {
+    app.patch("/ideas/:ideaId", verifyToken, async (req, res) => {
       const { ideaId } = req.params;
       const updatedFields = req.body;
 
@@ -123,7 +123,7 @@ async function run() {
       res.send(result);
     });
 
-    app.delete("/ideas/:ideaId", async (req, res) => {
+    app.delete("/ideas/:ideaId", verifyToken, async (req, res) => {
       const { ideaId } = req.params;
 
       const result = await ideasCollection.deleteOne({
@@ -146,7 +146,7 @@ async function run() {
       res.send(idea);
     });
 
-    app.post("/ideas", async (req, res) => {
+    app.post("/ideas", verifyToken, async (req, res) => {
       const idea = req.body;
 
       const newIdea = {
