@@ -56,7 +56,38 @@ async function run() {
     const commentCollection = db.collection("comments");
 
     app.get("/ideas", async (req, res) => {
-      const ideas = await ideasCollection.find().toArray();
+      const { search, category } = req.query;
+
+      const query = {};
+
+      // SEARCH
+      if (search) {
+        query.$or = [
+          {
+            title: {
+              $regex: search,
+              $options: "i",
+            },
+          },
+          {
+            shortDescription: {
+              $regex: search,
+              $options: "i",
+            },
+          },
+        ];
+      }
+
+      // CATEGORY
+      if (category && category !== "All") {
+        query.category = category;
+      }
+
+      const ideas = await ideasCollection
+        .find(query)
+        .sort({ createdAt: -1 })
+        .toArray();
+
       res.send(ideas);
     });
 
@@ -104,8 +135,14 @@ async function run() {
     });
 
     app.post("/ideas", async (req, res) => {
-      const ideaData = req.body;
-      const result = await ideasCollection.insertOne(ideaData);
+      const idea = req.body;
+
+      const newIdea = {
+        ...idea,
+        createdAt: new Date(idea.createdAt || Date.now()), // FORCE DATE TYPE
+      };
+
+      const result = await ideasCollection.insertOne(newIdea);
 
       res.send(result);
     });
