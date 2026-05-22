@@ -60,7 +60,6 @@ async function run() {
 
       const query = {};
 
-      // SEARCH
       if (search) {
         query.$or = [
           {
@@ -78,7 +77,6 @@ async function run() {
         ];
       }
 
-      // CATEGORY
       if (category && category !== "All") {
         query.category = category;
       }
@@ -89,6 +87,20 @@ async function run() {
         .toArray();
 
       res.send(ideas);
+    });
+
+    app.get("/ideas/trending", async (req, res) => {
+      const trendingIdeas = await ideasCollection
+        .find()
+        .sort({
+          upvotes: -1,
+          comments: -1,
+          createdAt: -1,
+        })
+        .limit(6)
+        .toArray();
+
+      res.send(trendingIdeas);
     });
 
     app.get("/ideas/user/:email", async (req, res) => {
